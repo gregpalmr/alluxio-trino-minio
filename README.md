@@ -214,7 +214,9 @@ Launch a bash session in the Trino coordinator container and run a CREATE TABLE 
      ) 
      AS SELECT * FROM tpch.tiny.customer;
    
-     SELECT * FROM default.customer_s3a LIMIT 500;
+     SELECT * FROM default.customer_s3a \
+          WHERE acctbal > 3500.00 AND acctbal < 9000.00 \
+          ORDER BY acctbal LIMIT 25;
  
 Step 10. View the Alluxio cache storage usage
 
