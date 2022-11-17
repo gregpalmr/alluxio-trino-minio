@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<configuration>
+
+    <!-- Enable the Alluxio Transparent URI feature for s3 and s3a end-points -->
+    <property>
+        <name>fs.s3.impl</name>
+        <value>alluxio.hadoop.ShimFileSystem</value>
+     </property>
+     <property>
+	  <name>fs.AbstractFileSystem.s3.impl</name>
+	  <value>alluxio.hadoop.AlluxioShimFileSystem</value>
+     </property>
+
+    <!-- Enable the Alluxio Transparent URI feature for HDFS end-points -->
+	<property>
+  	  <name>fs.hdfs.impl</name>
+  	  <value>alluxio.hadoop.ShimFileSystem</value>
+	</property>
+	<property>
+	  <name>fs.AbstractFileSystem.hdfs.impl</name>
+	  <value>alluxio.hadoop.AlluxioShimFileSystem</value>
+     </property>
+
+     <!-- Don't apply Transparent URI for these files -->
+	<property>
+  	  <name>alluxio.user.shimfs.bypass.prefix.list</name>
+  	  <value></value>
+     </property>
+
+     <!-- Don't auto mount Alluxio mounts -->
+	<property>
+  	  <name>alluxio.master.shimfs.auto.mount.enabled</name>
+  	  <value>false</value>
+	</property>
+
+     <!-- Specify the Alluxio master node -->
+    	<property>
+  	  <name>alluxio.master.hostname</name>
+  	  <value>alluxio-master</value>
+	</property>
+
+     <!-- Tell Alluxio to CACHE data when it is read for the first time -->
+    	<property>
+  	  <name>alluxio.user.file.readtype.default</name>
+  	  <value>CACHE</value>
+	</property>
+
+</configuration>

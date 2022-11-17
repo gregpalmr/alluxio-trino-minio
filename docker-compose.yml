@@ -1,0 +1,134 @@
+version: '3.7'
+services:
+  trino-coordinator:
+    image: 'trinodb/trino:385'
+    hostname: trino-coordinator
+    container_name: trino-coordinator
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./etc:/tmp/etc-trino
+      - ./alluxio-files:/tmp/alluxio-files
+      - ./conf:/tmp/conf
+    networks:
+      - trino-network
+    command:
+      - /bin/bash
+      - -c 
+      - |
+        find /usr/lib/trino -name alluxio*shaded* -exec rm {} \;
+        cp /tmp/alluxio-files/alluxio-enterprise-*-client.jar /usr/lib/trino/plugin/hive/
+        cp /tmp/alluxio-files/alluxio-core-site.xml /etc/trino/alluxio-core-site.xml
+        cp -R /tmp/etc-trino/* /etc/trino/
+        /usr/lib/trino/bin/run-trino
+
+  mariadb:
+    image: 'mariadb:latest'
+    hostname: mariadb
+    container_name: mariadb
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+      MYSQL_DATABASE: metastore_db
+    networks:
+      - trino-network
+
+  hive-metastore:
+    image: 'bitsondatadev/hive-metastore:latest'
+    hostname: hive-metastore
+    container_name: hive-metastore
+    ports:
+      - '9083:9083' # Metastore Thrift
+    volumes:
+      - ./conf/metastore-site.xml:/opt/apache-hive-metastore-3.0.0-bin/conf/metastore-site.xml:ro
+      #- ./alluxio-files/alluxio-enterprise-2.9.0-1.0-client.jar:/opt/apache-hive-metastore-3.0.0-bin/lib/alluxio-enterprise-2.9.0-1.0-client.jar
+      #- ./alluxio-files/alluxio-core-site.xml:/opt/hadoop-3.2.0/etc/hadoop/core-site.xml
+    environment:
+      METASTORE_DB_HOSTNAME: mariadb
+    depends_on:
+      - mariadb
+    networks:
+      - trino-network
+    command:
+      - /bin/sh
+      - -c 
+      - |
+        /entrypoint.sh
+
+  minio:
+    image: 'minio/minio:latest'
+    hostname: minio
+    container_name: minio
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio-data:/data
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    command: server --console-address ":9001" /data
+    networks:
+      - trino-network
+
+  alluxio-master:
+    image: 'alluxio/alluxio-enterprise:latest'
+    networks:
+      - trino-network
+    hostname: alluxio-master
+    container_name: alluxio-master
+    environment:
+      # Run the command outside of this file to get the base64 formated license file
+      # Like this: export ALLUXIO_LICENSE_BASE64=$(cat ./my-alluxio-license-file.json | base64)
+      ALLUXIO_LICENSE_BASE64: ${ALLUXIO_LICENSE_BASE64}
+      ALLUXIO_JAVA_OPTS: "-Dalluxio.master.mount.table.root.ufs=/opt/alluxio/underFSStorage -Dalluxio.master.hostname=localhost"
+    volumes:
+      - alluxio-data:/opt/alluxio/underFSStorage
+      - ./alluxio-files/alluxio-site.properties:/opt/alluxio/conf/alluxio-site.properties 
+    expose:
+      - "19998"
+      - "19999"
+      - "19200"
+    ports:
+      - "19998:19998"
+      - "19999:19999"
+    command: ["master"]
+
+  alluxio-worker:
+    image: 'alluxio/alluxio-enterprise:latest'
+    networks:
+      - trino-network
+    hostname: alluxio-worker1
+    container_name: alluxio-worker1
+    shm_size: '1gb'
+    depends_on:
+      - alluxio-master
+    environment:
+      ALLUXIO_JAVA_OPTS: "-Dalluxio.master.hostname=alluxio-master -Dalluxio.worker.ramdisk.size=1G -Dalluxio.master.mount.table.root.ufs=/opt/alluxio/underFSStorage -Dalluxio.worker.hostname=alluxio-worker"
+    volumes:
+      - alluxio-data:/opt/alluxio/underFSStorage
+      - ./alluxio-files/alluxio-site.properties:/opt/alluxio/conf/alluxio-site.properties 
+    expose:
+      - "29999"
+      - "30000"
+      - "30001"
+      - "30003"
+      - "39999"
+    ports:
+      - "29999:29999"
+      - "30000:30000"
+      - "39999:39999"
+    command: ["worker"]
+    
+volumes:
+  minio-data:
+    driver: local
+  alluxio-data:
+    driver: local
+
+networks:
+  trino-network:
+    driver: bridge
