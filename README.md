@@ -57,7 +57,7 @@ The command will create the network object and the docker volumes, then it will 
 
 The minio container does not include the minio client command (mc) so you will have to use the web console to create a bucker. Follow these steps:
 
-     - Point your web browser to http://localhost:9001
+     - Point your web browser to [http://localhost:9001](http://localhost:9001)
 
      - Log in using the user id "minio" and the password "minio123"
 
@@ -185,12 +185,13 @@ Display the Alluxio core-site.xml file contents:
 Confirm that the Alluxio client jar file is in the Trino hive plugin directory:
 
      ls -al /usr/lib/trino/plugin/hive/alluxio*client.jar
+     -rw-r--r-- 1 trino trino 89061794 Nov 17 22:53 /usr/lib/trino/plugin/hive/alluxio-enterprise-2.9.0-1.0-client.jar
 
 ### Step 9. View the Alluxio Web console
 
 Point your web browser to the Alluxio Web console to see if any files are being cached.
 
-     (http://localhost:19999)
+     [http://localhost:19999](http://localhost:19999)
 
 Note that there is zero storage space being used to cache data. Later, when you run a Trino query, some data will be cached.
 
