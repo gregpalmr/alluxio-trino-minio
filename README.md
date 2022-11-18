@@ -187,13 +187,19 @@ Confirm that the Alluxio client jar file is in the Trino hive plugin directory:
      ls -al /usr/lib/trino/plugin/hive/alluxio*client.jar
      -rw-r--r-- 1 trino trino 89061794 Nov 17 22:53 /usr/lib/trino/plugin/hive/alluxio-enterprise-2.9.0-1.0-client.jar
 
-### Step 9. View the Alluxio Web console
+### Step 9. View the Alluxio Web console and Trino Web console
 
 Point your web browser to the Alluxio Web console to see if any files are being cached.
 
      [http://localhost:19999](http://localhost:19999)
 
 Note that there is zero storage space being used to cache data. Later, when you run a Trino query, some data will be cached.
+
+Point your web browser to the Trino Web console to view query status and history
+
+     [http://localhost:8080](http://localhost:8080)
+
+The user id is "trino" and there is no password.
 
 ### Step 10. Test Trino using the Alluxio Transparent URI feature
 
@@ -214,8 +220,8 @@ Launch a bash session in the Trino coordinator container and run a CREATE TABLE 
      ) 
      AS SELECT * FROM tpch.tiny.customer;
    
-     SELECT * FROM default.customer_s3a \
-          WHERE acctbal > 3500.00 AND acctbal < 9000.00 \
+     SELECT * FROM default.customer_s3a 
+          WHERE acctbal > 3500.00 AND acctbal < 9000.00 
           ORDER BY acctbal LIMIT 25;
  
 Step 10. View the Alluxio cache storage usage
