@@ -85,7 +85,9 @@ Open a bash session in the alluxio-master container and mount the minio bucket u
 
      alluxio fs chmod -R 777 /bucket1
 
-If you attempt to list the files in the bucket you will get a 404 error since it is empty.
+Also, you can view the Alluxio audit log to see when Trino queries access the Alluxio virtual file system. Use this command:
+
+     tail -f /opt/alluxio/logs/master_audit.log
 
 ### Step 7. (Optional) Enable debug mode on the Alluxio master
 
@@ -112,31 +114,28 @@ Display the minio.properties file and see the "hive.config.resources" property p
      cat minio.properties
 
      connector.name=hive-hadoop2
+     hive.s3-file-system-type=HADOOP_DEFAULT
      hive.metastore.uri=thrift://hive-metastore:9083
-     hive.s3.path-style-access=true
-     hive.s3.endpoint=http://minio:9000
-     hive.s3.aws-access-key=minio
-     hive.s3.aws-secret-key=minio123
      hive.non-managed-table-writes-enabled=true
      hive.s3select-pushdown.enabled=true
      hive.storage-format=ORC
      hive.allow-drop-table=true
-     hive.config.resources=/etc/trino/alluxio-core-site.xml
+     hive.config.resources=/etc/trino/core-site.xml
 
 Display the Alluxio core-site.xml file contents:
 
-     cat /etc/trino/alluxio-core-site.xml
+     cat /etc/trino/core-site.xml
 
      <?xml version="1.0"?>
      <configuration>
 
          <!-- Enable the Alluxio Transparent URI feature for s3 and s3a end-points -->
          <property>
-             <name>fs.s3.impl</name>
+             <name>fs.s3a.impl</name>
              <value>alluxio.hadoop.ShimFileSystem</value>
           </property>
           <property>
-            <name>fs.AbstractFileSystem.s3.impl</name>
+            <name>fs.AbstractFileSystem.s3a.impl</name>
             <value>alluxio.hadoop.AlluxioShimFileSystem</value>
           </property>
 
@@ -174,13 +173,7 @@ Display the Alluxio core-site.xml file contents:
             <value>CACHE</value>
           </property>
 
-          <!-- Tell Alluxio to use a block size of 16MB -->
-          <property>
-            <name>alluxio.user.block.size.bytes.default</name>
-            <value>16MB</value>
-          </property>
-
-     </configuration>
+</configuration>
 
 Confirm that the Alluxio client jar file is in the Trino hive plugin directory:
 

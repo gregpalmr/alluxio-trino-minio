@@ -3,11 +3,11 @@
 
     <!-- Enable the Alluxio Transparent URI feature for s3 and s3a end-points -->
     <property>
-        <name>fs.s3.impl</name>
+        <name>fs.s3a.impl</name>
         <value>alluxio.hadoop.ShimFileSystem</value>
      </property>
      <property>
-	  <name>fs.AbstractFileSystem.s3.impl</name>
+	  <name>fs.AbstractFileSystem.s3a.impl</name>
 	  <value>alluxio.hadoop.AlluxioShimFileSystem</value>
      </property>
 

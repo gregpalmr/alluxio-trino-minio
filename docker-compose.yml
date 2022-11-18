@@ -44,8 +44,6 @@ services:
       - '9083:9083' # Metastore Thrift
     volumes:
       - ./conf/metastore-site.xml:/opt/apache-hive-metastore-3.0.0-bin/conf/metastore-site.xml:ro
-      #- ./alluxio-files/alluxio-enterprise-2.9.0-1.0-client.jar:/opt/apache-hive-metastore-3.0.0-bin/lib/alluxio-enterprise-2.9.0-1.0-client.jar
-      #- ./alluxio-files/alluxio-core-site.xml:/opt/hadoop-3.2.0/etc/hadoop/core-site.xml
     environment:
       METASTORE_DB_HOSTNAME: mariadb
     depends_on:
