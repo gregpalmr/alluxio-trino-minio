@@ -77,8 +77,8 @@ Open a bash session in the alluxio-master container and mount the minio bucket u
        --option alluxio.underfs.s3.endpoint=http://minio:9000 \
        --option alluxio.underfs.s3.disable.dns.buckets=true \
        --option alluxio.underfs.s3.inherit.acl=false \
-       --option s3.accessKeyId=minio \
-       --option s3.secretKey=minio123 \
+       --option s3a.accessKeyId=minio \
+       --option s3a.secretKey=minio123 \
        /bucket1 s3a://bucket1/
 
      alluxio fs chmod 777 /
