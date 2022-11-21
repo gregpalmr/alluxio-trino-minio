@@ -221,12 +221,12 @@ Step 10. View the Alluxio cache storage usage
 
 When Trino queries data using Alluxio's Transparent URI feature, it will cache data to Alluxio cache storage, when it is first read from the under file system (in this case, Minio).
 
-To see if the customer_s3a data files are cached, go back to the bash session on the alluxio-master container and list the data files. You should see that some data is cached for the cusotmer_s3a data set by the fact that the 8th column shows a percentage being cached. If it shows 0%, then Alluxio did not cache any of the data in that file.
+To see if the customer_s3a data files are cached, go back to the bash session on the alluxio-master container and list the data files. You should see that some data is cached for the cusotmer_s3a data set by the fact that the 8th column shows a percentage being cached. If it shows 100%, then Alluxio cached all of the data in that file.
 
      docker exec -it alluxio-master bash
 
      alluxio fs ls -R /bucket1/customer_s3a
-     -rwx------  alluxio  alluxio  78509  PERSISTED 11-17-2022 22:29:47:610  0% /bucket1/customer_s3a/20221117_222944_00003_76isd_03efa9e5-a56a-4d83-8f8a-5bbdbaf9bc1f
+     -rwx------  alluxio  alluxio  78509  PERSISTED 11-17-2022 22:29:47:610  100% /bucket1/customer_s3a/20221117_222944_00003_76isd_03efa9e5-a56a-4d83-8f8a-5bbdbaf9bc1f
 
 You can also view the Alluxio Web console you launched in Step 9 to see if any data is being cached by Alluxio, or run the following Alluxio CLI command:
 
