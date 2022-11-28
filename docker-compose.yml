@@ -1,83 +1,18 @@
 version: '3.7'
+
 services:
-  trino-coordinator:
-    image: 'trinodb/trino:385'
-    hostname: trino-coordinator
-    container_name: trino-coordinator
-    ports:
-      - '8080:8080'
-    volumes:
-      - ./etc:/tmp/etc-trino
-      - ./alluxio-files:/tmp/alluxio-files
-      - ./conf:/tmp/conf
-    networks:
-      - trino-network
-    command:
-      - /bin/bash
-      - -c 
-      - |
-        find /usr/lib/trino -name alluxio*shaded* -exec rm {} \;
-        cp /tmp/alluxio-files/alluxio-enterprise-*-client.jar /usr/lib/trino/plugin/hive/
-        cp -R /tmp/etc-trino/* /etc/trino/
-        cp /tmp/alluxio-files/alluxio-core-site.xml /etc/trino/core-site.xml
-        /usr/lib/trino/bin/run-trino
-
-  mariadb:
-    image: 'mariadb:latest'
-    hostname: mariadb
-    container_name: mariadb
-    ports:
-      - '3306:3306'
-    environment:
-      MYSQL_ROOT_PASSWORD: admin
-      MYSQL_USER: admin
-      MYSQL_PASSWORD: admin
-      MYSQL_DATABASE: metastore_db
-    networks:
-      - trino-network
-
-  hive-metastore:
-    image: 'bitsondatadev/hive-metastore:latest'
-    hostname: hive-metastore
-    container_name: hive-metastore
-    ports:
-      - '9083:9083' # Metastore Thrift
-    volumes:
-      - ./conf/metastore-site.xml:/opt/apache-hive-metastore-3.0.0-bin/conf/metastore-site.xml:ro
-    environment:
-      METASTORE_DB_HOSTNAME: mariadb
-    depends_on:
-      - mariadb
-    networks:
-      - trino-network
-    command:
-      - /bin/sh
-      - -c 
-      - |
-        /entrypoint.sh
-
-  minio:
-    image: 'minio/minio:latest'
-    hostname: minio
-    container_name: minio
-    ports:
-      - '9000:9000'
-      - '9001:9001'
-    volumes:
-      - minio-data:/data
-    environment:
-      MINIO_ACCESS_KEY: minio
-      MINIO_SECRET_KEY: minio123
-    command: server --console-address ":9001" /data
-    networks:
-      - trino-network
 
   alluxio-master:
     image: 'alluxio/alluxio-enterprise:latest'
-    networks:
-      - trino-network
     hostname: alluxio-master
     container_name: alluxio-master
+    networks:
+      custom:
+        ipv4_address: 172.23.0.2
+    extra_hosts:
+      - "alluxio-master:172.23.0.2"
+      - "alluxio-worker:172.23.0.3"
+      - "minio         :172.23.0.7"
     environment:
       # Run the command outside of this file to get the base64 formated license file
       # Like this: export ALLUXIO_LICENSE_BASE64=$(cat ./my-alluxio-license-file.json | base64)
@@ -97,10 +32,15 @@ services:
 
   alluxio-worker:
     image: 'alluxio/alluxio-enterprise:latest'
-    networks:
-      - trino-network
     hostname: alluxio-worker1
     container_name: alluxio-worker1
+    networks:
+      custom:
+        ipv4_address: 172.23.0.3
+    extra_hosts:
+      - "alluxio-master:172.23.0.2"
+      - "alluxio-worker:172.23.0.3"
+      - "minio         :172.23.0.7"
     shm_size: '1gb'
     depends_on:
       - alluxio-master
@@ -120,13 +60,104 @@ services:
       - "30000:30000"
       - "39999:39999"
     command: ["worker"]
-    
+
+  mariadb:
+    image: 'mariadb:latest'
+    hostname: mariadb
+    container_name: mariadb
+    networks:
+      custom:
+        ipv4_address: 172.23.0.4
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+      MYSQL_DATABASE: metastore_db
+    volumes:
+      - mariadb-data:/var/lib/mysql
+
+  trino-coordinator:
+    image: 'trinodb/trino:385'
+    hostname: trino-coordinator
+    container_name: trino-coordinator
+    networks:
+      custom:
+        ipv4_address: 172.23.0.5
+    extra_hosts:
+      - "alluxio-master:172.23.0.2"
+      - "alluxio-worker:172.23.0.3"
+      - "mariadb       :172.23.0.4"
+      - "minio         :172.23.0.7"
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./etc:/tmp/etc-trino
+      - ./alluxio-files:/tmp/alluxio-files
+      - ./conf:/tmp/conf
+    command:
+      - /bin/bash
+      - -c 
+      - |
+        find /usr/lib/trino -name alluxio*shaded* -exec rm {} \;
+        cp /tmp/alluxio-files/alluxio-enterprise-*-client.jar /usr/lib/trino/plugin/hive/
+        cp -R /tmp/etc-trino/* /etc/trino/
+        cp /tmp/alluxio-files/alluxio-core-site.xml /etc/trino/core-site.xml
+        /usr/lib/trino/bin/run-trino
+
+
+  hive-metastore:
+    image: 'bitsondatadev/hive-metastore:latest'
+    hostname: hive-metastore
+    container_name: hive-metastore
+    networks:
+      custom:
+        ipv4_address: 172.23.0.6
+    ports:
+      - '9083:9083' # Metastore Thrift
+    volumes:
+      - ./conf/metastore-site.xml:/opt/apache-hive-metastore-3.0.0-bin/conf/metastore-site.xml:ro
+    environment:
+      METASTORE_DB_HOSTNAME: mariadb
+    depends_on:
+      - mariadb
+    command:
+      - /bin/sh
+      - -c 
+      - |
+        /entrypoint.sh
+
+  minio:
+    image: 'minio/minio:latest'
+    hostname: minio
+    container_name: minio
+    networks:
+      custom:
+        ipv4_address: 172.23.0.7
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio-data:/data
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    command: server --console-address ":9001" /data
+
 volumes:
+  mariadb-data:
+    driver: local
   minio-data:
     driver: local
   alluxio-data:
     driver: local
 
 networks:
-  trino-network:
+  custom:
     driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.23.0.0/16
+        gateway: 172.23.0.1
