@@ -1,14 +1,16 @@
 # alluxio-trino-minio
 
-### Run Alluxio with Trino and Minio as the S3 object store
+### Employ the Alluxio Transparent URI capability with Trino, Hive Metastore and Spark and with Minio as the S3 object store
 
 ---
+
+This git repo provides a complete environment for demonstrating how to configure Alluxio's Transparent URI capability for use with Trino as a query engine and Hive as the metastore, as well as with Spark and SparkSQL.
 
 This docker compose package was based on the docker compose setup described here:
 
      https://github.com/bitsondatadev/trino-getting-started/tree/main/hive/trino-minio
 
-This modified compose package deploys Trino, Alluxio, Hive metastore and Minio. It configures a Trino Hive catalog to use the Alluxio Transparent URI feature. See: 
+This modified compose package deploys Trino, Alluxio, Hive metastore, Spark and Minio. It configures a Trino Hive catalog to use the Alluxio Transparent URI feature. See: 
 
      https://docs.alluxio.io/ee/user/stable/en/operation/Transparent-Uri.html
 
