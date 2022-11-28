@@ -194,7 +194,7 @@ The user id is "trino" and there is no password.
 
 ### Step 10. Test Trino using the Alluxio Transparent URI feature
 
-The Alluxio Transparent URI feature will redirect references to the s3 and s3a URIs to the native Alluxio URI (alluxio://). Therefore Hive table definitions with the "external_location=s3a://<bucket_name>/<directory name>" will be redirected to Alluxio instead of native Minio. All the Alluxio data orchestration and data caching capabilities will be employed.
+The Alluxio Transparent URI feature will redirect references to s3 and s3a URIs to the native Alluxio URI (alluxio://). Therefore Hive table definitions with the "external_location=s3a://<bucket_name>/<directory name>" will be redirected to Alluxio instead of native Minio. All the Alluxio data orchestration and data caching capabilities will be employed.
 
 Launch a bash session in the Trino coordinator container and run a CREATE TABLE command to create a table using the "minio" Trino cagtalog setup and the "s3a" URI. Then query the data. Use these commands:
 
@@ -234,7 +234,7 @@ You can also view the Alluxio Web console you launched in Step 9 to see if any d
 
 Launch a bash session in the Spark master container and explore how the Spark environment is integrated with the Alluxio Transparent URI capability. Use the following commands:
 
- docker exec -it spark-master bash
+     docker exec -it spark-master bash
 
 See that the Alluxio client jar file was added to the Spark "jars" directory (and classpath). This is required for accessing Alluxio using both the native protocol ("alluxio://") and the Transparent URI s3a protocol (s3a://).
 
@@ -302,7 +302,7 @@ Finally, see how Spark is configured to integrate with the Hive metastore:
 
 ### Step 13. Test Spark using the Alluxio Transparent URI feature
 
-The Alluxio Transparent URI feature will redirect references to the s3 and s3a URIs to the native Alluxio URI (alluxio://). Therefore Hive table definitions with the "external_location=s3a://<bucket_name>/" will be redirected to Alluxio instead of native Minio. All the Alluxio data orchestration and data caching capabilities will be employed.
+The Alluxio Transparent URI feature will redirect references to s3 and s3a URIs to the native Alluxio URI (alluxio://). Therefore Hive table definitions with the "external_location=s3a://<bucket_name>/" will be redirected to Alluxio instead of native Minio. All the Alluxio data orchestration and data caching capabilities will be employed.
 
 Launch a bash session in the Spark master container and run some Spark Scala commands to access the Hive table via Alluxio and also access the data file directly without using the Hive metastore.  Use these commands:
 
@@ -314,7 +314,7 @@ Launch a bash session in the Spark master container and run some Spark Scala com
      scala>
 
        // Read the Hive table using the hive metastore
-	  // Note: It will read via Alluxio's Transparent URI capability
+       // Note: It will read via Alluxio's Transparent URI capability
 	  
 	  import org.apache.spark.sql.hive.HiveContext
 
@@ -339,4 +339,6 @@ When finished, destroy the docker containers and clean up the docker volumes usi
 
      docker volume prune
 
+---
 
+Please direct questions or comments to greg.palme@alluxio.com
