@@ -105,13 +105,14 @@ Launch a bash session in the Trino coordinator container and explore the setup o
      
      docker exec -it trino-coordinator bash
 
-Change to the "minio" catalog configuration directory:
+First, see how the Alluxio client jar file was added to the Trino Hive plugin directory (and classpath). This is required for accessing Alluxio using the Transparent URI capability with s3a URIs (s3a://).
 
-     cd /etc/trino/catalog/minio
+     ls -al /usr/lib/trino/plugin/hive/alluxio*client.jar
+     -rw-r--r-- 1 trino trino 89061794 Nov 17 22:53 /usr/lib/trino/plugin/hive/alluxio-enterprise-2.9.0-1.0-client.jar
 
-Display the minio.properties file and see the "hive.config.resources" property pointing to the Alluxio cores-site.xml file:
+Display the Minio catalog's minio.properties file and notice that the Minio endpoint and credentials are NOT configured here. Instead, Trino will use the Alluxio Transparent URI capability when accessing s3a URIs. Also, see the "hive.config.resources" property pointing to the Alluxio cores-site.xml file:
 
-     cat minio.properties
+     cat /etc/trino/catalog/minio/minio.properties
 
      connector.name=hive-hadoop2
      hive.s3-file-system-type=HADOOP_DEFAULT
@@ -121,6 +122,8 @@ Display the minio.properties file and see the "hive.config.resources" property p
      hive.storage-format=ORC
      hive.allow-drop-table=true
      hive.config.resources=/etc/trino/core-site.xml
+
+Next see how the Alluxio "shim" file system is configured to handle references to s3a URIs. See the properties named "fs.s3a.impl" and "fs.AbstractFileSystem.s3a.impl". Also, the "alluxio.master.hostname" property is defined to point to the Alluxio master node. If you are using Alluxio in high availability (HA) mode, with 3, 5 or 7 master nodes, then you would use the "alluxio.master.rpc.addresses" property instead.
 
 Display the Alluxio core-site.xml file contents:
 
@@ -175,11 +178,6 @@ Display the Alluxio core-site.xml file contents:
 
 </configuration>
 
-Confirm that the Alluxio client jar file is in the Trino hive plugin directory:
-
-     ls -al /usr/lib/trino/plugin/hive/alluxio*client.jar
-     -rw-r--r-- 1 trino trino 89061794 Nov 17 22:53 /usr/lib/trino/plugin/hive/alluxio-enterprise-2.9.0-1.0-client.jar
-
 ### Step 9. View the Alluxio Web console and Trino Web console
 
 Point your web browser to the Alluxio Web console to see if any files are being cached.
@@ -217,7 +215,7 @@ Launch a bash session in the Trino coordinator container and run a CREATE TABLE 
           WHERE acctbal > 3500.00 AND acctbal < 9000.00 
           ORDER BY acctbal LIMIT 25;
  
-Step 10. View the Alluxio cache storage usage
+### Step 11. View the Alluxio cache storage usage
 
 When Trino queries data using Alluxio's Transparent URI feature, it will cache data to Alluxio cache storage, when it is first read from the under file system (in this case, Minio).
 
@@ -232,7 +230,108 @@ You can also view the Alluxio Web console you launched in Step 9 to see if any d
 
      alluxio fsadmin report
 
-### Step 11. Destroy the containers
+### Step 12. Explore the Spark configuration
+
+Launch a bash session in the Spark master container and explore how the Spark environment is integrated with the Alluxio Transparent URI capability. Use the following commands:
+
+ docker exec -it spark-master bash
+
+See that the Alluxio client jar file was added to the Spark "jars" directory (and classpath). This is required for accessing Alluxio using both the native protocol ("alluxio://") and the Transparent URI s3a protocol (s3a://).
+
+     ls -al $SPARK_HOME/jars/*alluxio*
+     -rw-r--r-- 1 1001 root 89061794 Nov 28 16:34 /opt/bitnami/spark/jars/alluxio-enterprise-2.9.0-1.0-client.jar
+
+Next see how the Alluxio "shim" file system is configured to handle references to s3a URIs. See the properties named "fs.s3a.impl" and "fs.AbstractFileSystem.s3a.impl". Also, the "alluxio.master.hostname" property is defined to point to the Alluxio master node. If you are using Alluxio in high availability (HA) mode, with 3, 5 or 7 master nodes, then you would use the "alluxio.master.rpc.addresses" property instead.
+
+     cat $SPARK_HOME/conf/core-site.xml
+
+     <?xml version="1.0"?>
+     <configuration>
+
+         <!-- Enable the Alluxio Transparent URI feature for s3 and s3a end-points -->
+         <property>
+             <name>fs.s3a.impl</name>
+             <value>alluxio.hadoop.ShimFileSystem</value>
+          </property>
+          <property>
+            <name>fs.AbstractFileSystem.s3a.impl</name>
+            <value>alluxio.hadoop.AlluxioShimFileSystem</value>
+          </property>
+
+         <!-- Enable the Alluxio Transparent URI feature for HDFS end-points -->
+          <property>
+            <name>fs.hdfs.impl</name>
+            <value>alluxio.hadoop.ShimFileSystem</value>
+          </property>
+          <property>
+            <name>fs.AbstractFileSystem.hdfs.impl</name>
+            <value>alluxio.hadoop.AlluxioShimFileSystem</value>
+          </property>
+
+          <!-- Don't apply Transparent URI for these files -->
+          <property>
+            <name>alluxio.user.shimfs.bypass.prefix.list</name>
+            <value></value>
+          </property>
+
+          <!-- Don't auto mount Alluxio mounts -->
+          <property>
+            <name>alluxio.master.shimfs.auto.mount.enabled</name>
+            <value>false</value>
+          </property>
+
+          <!-- Specify the Alluxio master node -->
+          <property>
+            <name>alluxio.master.hostname</name>
+            <value>alluxio-master</value>
+          </property>
+
+          <!-- Tell Alluxio to CACHE data when it is read for the first time -->
+          <property>
+            <name>alluxio.user.file.readtype.default</name>
+            <value>CACHE</value>
+	     </property>
+
+     </configuration>
+
+Finally, see how Spark is configured to integrate with the Hive metastore:
+
+     cat $SPARK_HOME/conf/spark-defaults.conf
+
+     spark.hadoop.hive.metastore.uris=thrift://hive-metastore:9083
+
+### Step 13. Test Spark using the Alluxio Transparent URI feature
+
+The Alluxio Transparent URI feature will redirect references to the s3 and s3a URIs to the native Alluxio URI (alluxio://). Therefore Hive table definitions with the "external_location=s3a://<bucket_name>/" will be redirected to Alluxio instead of native Minio. All the Alluxio data orchestration and data caching capabilities will be employed.
+
+Launch a bash session in the Spark master container and run some Spark Scala commands to access the Hive table via Alluxio and also access the data file directly without using the Hive metastore.  Use these commands:
+
+     docker exec -it spark-master bash
+
+     spark-shell --master "spark://spark-master:7077" \
+     --driver-java-options "-Dspark.hadoop.hive.metastore.uris=thrift://hive-metastore:9083"
+
+     scala>
+
+       // Read the Hive table using the hive metastore
+	  // Note: It will read via Alluxio's Transparent URI capability
+	  
+	  import org.apache.spark.sql.hive.HiveContext
+
+	  val hiveContext = new org.apache.spark.sql.hive.HiveContext(sc)
+
+	  hiveContext.sql("USE default")
+
+	  hiveContext.sql("SHOW TABLES").show()
+
+	  hiveContext.sql("SELECT * FROM default.customer_s3a WHERE acctbal > 3500.00 AND acctbal < 9000.00 ORDER BY acctbal LIMIT 25").show()
+
+	  // Read the S3 bucket directly without using the Hive metastore
+	  // Note: It will read via Alluxio's Transparent URI capability
+
+	  val df=spark.read.orc("s3a://bucket1/customer_s3a/").show(25)
+
+### Step 14. Destroy the containers
 
 When finished, destroy the docker containers and clean up the docker volumes using these commands:
 
