@@ -4,6 +4,8 @@
 
 ---
 
+## INTRO
+
 This git repo provides a complete environment for demonstrating how to configure Alluxio's Transparent URI capability for use with Trino as a query engine and Hive as the metastore, as well as with Spark and SparkSQL.
 
 This docker compose package was based on the docker compose setup described here:
@@ -14,7 +16,7 @@ This modified compose package deploys Trino, Alluxio, Hive metastore, Spark and 
 
      https://docs.alluxio.io/ee/user/stable/en/operation/Transparent-Uri.html
 
-## USAGE:
+## USAGE
 
 ### Step 1. Install Docker desktop 
 
