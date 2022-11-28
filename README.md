@@ -1,6 +1,6 @@
 # alluxio-trino-minio
 
-### Employ the Alluxio Transparent URI capability with Trino, Hive Metastore and Spark and with Minio as the S3 object store
+### Employ the Alluxio Transparent URI capability with Trino, Spark and Minio as the S3 object store
 
 ---
 
