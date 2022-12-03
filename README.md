@@ -81,7 +81,11 @@ Use the Alluxio web console to view the pre-staged mount of the Minio "hive" buc
 
      - Point your web browser to http://localhost:19999
 
-     - Click on the "Browse" tab at the top of the page
+     - Click on the "MountTable" tab at the top of the page
+
+     - View the "/hive" mount point for the "s3a://hive" Minio bucket
+
+     - Now, click on the "Browse" tab at the top of the page
 
      - Click on the "hive" directory name
 
@@ -198,7 +202,7 @@ The user id is "trino" and there is no password.
 
 ### Step 10. Test Trino using the Alluxio Transparent URI feature
 
-The Alluxio Transparent URI feature will redirect references to s3 and s3a URIs to the native Alluxio URI (alluxio://). Therefore Hive table definitions with the "external_location=s3a://<bucket_name>/<directory name>" will be redirected to Alluxio instead of native Minio. All the Alluxio data orchestration and data caching capabilities will be employed.
+The Alluxio Transparent URI feature will redirect references to s3 and s3a URIs to the native Alluxio URI (alluxio://). Therefore Hive table definitions with the "external_location=s3a://<bucket_name>/<directory name>" will be redirected to Alluxio instead of to native Minio. All the Alluxio data orchestration and data caching capabilities will be employed.
 
 Launch a bash session in the Trino coordinator container and run a CREATE TABLE command to create a table using the "minio" Trino cagtalog setup and the "s3a" URI. Then query the data. Use these commands:
 
@@ -206,18 +210,20 @@ Launch a bash session in the Trino coordinator container and run a CREATE TABLE 
 
      trino --catalog minio --debug
 
-     USE default;
+     trino>
 
-     CREATE TABLE default.customer_s3a
-     WITH (
-       format = 'ORC',
-       external_location = 's3a://hive/warehouse/customer_s3a/'
-     ) 
-     AS SELECT * FROM tpch.tiny.customer;
-   
-     SELECT * FROM default.customer_s3a 
-          WHERE acctbal > 3500.00 AND acctbal < 9000.00 
-          ORDER BY acctbal LIMIT 25;
+          USE default;
+
+          CREATE TABLE default.customer_s3a
+          WITH (
+            format = 'ORC',
+            external_location = 's3a://hive/warehouse/customer_s3a/'
+          ) 
+          AS SELECT * FROM tpch.tiny.customer;
+        
+          SELECT * FROM default.customer_s3a 
+               WHERE acctbal > 3500.00 AND acctbal < 9000.00 
+               ORDER BY acctbal LIMIT 25;
  
 ### Step 11. View the Alluxio cache storage usage
 
