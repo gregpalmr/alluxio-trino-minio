@@ -236,7 +236,7 @@ To see if the customer_s3a data files are cached, go back to the bash session on
      alluxio fs ls -R /hive/warehouse/customer_s3a
      -rwx------  alluxio  alluxio  78509  PERSISTED 11-17-2022 22:29:47:610  100% /hive/warehouse/customer_s3a/20221117_222944_00003_76isd_03efa9e5-a56a-4d83-8f8a-5bbdbaf9bc1f
 
-You can also view the Alluxio Web console you launched in Step 9 to see if any data is being cached by Alluxio, or run the following Alluxio CLI command:
+You can also view the Alluxio Web console you launched in Step 6 to see if any data is being cached by Alluxio, or run the following Alluxio CLI command:
 
      alluxio fsadmin report
 
