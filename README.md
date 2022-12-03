@@ -50,44 +50,50 @@ The command will create the network object and the docker volumes, then it will 
      Creating network "trino-minio_trino-network" with driver "bridge"
      Creating volume "trino-minio_minio-data" with local driver
      Creating volume "trino-minio_alluxio-data" with local driver
-     Creating mariadb           ... done
-     Creating trino-coordinator ... done
-     Creating alluxio-master    ... done
+     Creating trino-coordinator    ... done
+     Creating spark-master         ... done
      Creating minio             ... done
-     Creating hive-metastore    ... done
-     Creating alluxio-worker1   ... done
+     Creating mariadb              ... done
+     Creating spark-worker         ... done
+     Creating minio-create-buckets ... done
+     Creating alluxio-master       ... done
+     Creating alluxio-mount-minio-bucket ... done
+     Creating alluxio-worker1            ... done
+     Creating hive-metastore             ... done
 
-### Step 5. Create a bucket in Minio
+### Step 5. View the buckets in Minio
 
-The minio container does not include the minio client command (mc) so you will have to use the web console to create a bucker. Follow these steps:
+Use the Minio web console to view the pre-staged "hive" bucket in Minio. Follow these steps:
 
-     - Point your web browser to [http://localhost:9001](http://localhost:9001)
+     - Point your web browser to http://localhost:9001
 
      - Log in using the user id "minio" and the password "minio123"
 
      - Click on the "Buckets" link in the upper left margin
 
-     - Click on the "Create Bucket +" button on the right
+     - Click on the buck link named "hive"
 
-     - Enter a bucket name of "bucket1" and then click on the "Create Bucket" button
+     - View the folder named "warehouse" in the hive bucket
 
-### Step 6. Mount the Minio bucket in Alluxio
+### Step 6. View the mounted Minio bucket in Alluxio
 
-Open a bash session in the alluxio-master container and mount the minio bucket using the following commands:
+Use the Alluxio web console to view the pre-staged mount of the Minio "hive" bucket in Alluxio. Follow these steps:
+
+     - Point your web browser to http://localhost:19999
+
+     - Click on the "Browse" tab at the top of the page
+
+     - Click on the "hive" directory name
+
+     - View the /hive/warehouse directory in the "hive" bucket
+
+If you want to use the Alluxio command line to view the bucket mount, you can follow these steps:
 
      docker exec -it alluxio-master bash
 
-     alluxio fs mount \
-       --option alluxio.underfs.s3.endpoint=http://minio:9000 \
-       --option alluxio.underfs.s3.disable.dns.buckets=true \
-       --option alluxio.underfs.s3.inherit.acl=false \
-       --option s3a.accessKeyId=minio \
-       --option s3a.secretKey=minio123 \
-       /bucket1 s3a://bucket1/
-
-     alluxio fs chmod 777 /
-
-     alluxio fs chmod -R 777 /bucket1
+     alluxio fs mount 
+     s3a://hive/ on /hive (s3, capacity=-1B, used=-1B, not read-only, not shared, properties={alluxio.underfs.s3.inherit.acl=false, alluxio.underfs.s3.disable.dns.buckets=true, alluxio.underfs.s3.endpoint=http://minio:9000, s3a.accessKeyId=******, s3a.secretKey=******})
+     /opt/alluxio/underFSStorage on / (local, capacity=195.80GB, used=87.07GB(44%), not read-only, not shared, properties={})
 
 Also, you can view the Alluxio audit log to see when Trino queries access the Alluxio virtual file system. Use this command:
 
@@ -182,17 +188,11 @@ Display the Alluxio core-site.xml file contents:
 
 </configuration>
 
-### Step 9. View the Alluxio Web console and Trino Web console
-
-Point your web browser to the Alluxio Web console to see if any files are being cached.
-
-     [http://localhost:19999](http://localhost:19999)
-
-Note that there is zero storage space being used to cache data. Later, when you run a Trino query, some data will be cached.
+### Step 9. View the Trino Web console
 
 Point your web browser to the Trino Web console to view query status and history
 
-     [http://localhost:8080](http://localhost:8080)
+     http://localhost:8080
 
 The user id is "trino" and there is no password.
 
@@ -211,7 +211,7 @@ Launch a bash session in the Trino coordinator container and run a CREATE TABLE 
      CREATE TABLE default.customer_s3a
      WITH (
        format = 'ORC',
-       external_location = 's3a://bucket1/customer_s3a/'
+       external_location = 's3a://hive/warehouse/customer_s3a/'
      ) 
      AS SELECT * FROM tpch.tiny.customer;
    
@@ -227,8 +227,8 @@ To see if the customer_s3a data files are cached, go back to the bash session on
 
      docker exec -it alluxio-master bash
 
-     alluxio fs ls -R /bucket1/customer_s3a
-     -rwx------  alluxio  alluxio  78509  PERSISTED 11-17-2022 22:29:47:610  100% /bucket1/customer_s3a/20221117_222944_00003_76isd_03efa9e5-a56a-4d83-8f8a-5bbdbaf9bc1f
+     alluxio fs ls -R /hive/warehouse/customer_s3a
+     -rwx------  alluxio  alluxio  78509  PERSISTED 11-17-2022 22:29:47:610  100% /hive/warehouse/customer_s3a/20221117_222944_00003_76isd_03efa9e5-a56a-4d83-8f8a-5bbdbaf9bc1f
 
 You can also view the Alluxio Web console you launched in Step 9 to see if any data is being cached by Alluxio, or run the following Alluxio CLI command:
 
@@ -333,7 +333,7 @@ Launch a bash session in the Spark master container and run some Spark Scala com
 	  // Read the S3 bucket directly without using the Hive metastore
 	  // Note: It will read via Alluxio's Transparent URI capability
 
-	  val df=spark.read.orc("s3a://bucket1/customer_s3a/").show(25)
+	  val df=spark.read.orc("s3a://hive/warehouse/customer_s3a/").show(25)
 
 ### Step 14. Destroy the containers
 
