@@ -9,6 +9,8 @@ services:
     networks:
       custom:
         ipv4_address: 172.23.0.2
+    depends_on:
+      - minio-create-buckets
     extra_hosts:
       - "alluxio-master:172.23.0.2"
       - "alluxio-worker:172.23.0.3"
@@ -20,7 +22,7 @@ services:
       ALLUXIO_JAVA_OPTS: "-Dalluxio.master.mount.table.root.ufs=/opt/alluxio/underFSStorage -Dalluxio.master.hostname=localhost"
     volumes:
       - alluxio-data:/opt/alluxio/underFSStorage
-      - ./alluxio-files/alluxio-site.properties:/opt/alluxio/conf/alluxio-site.properties 
+      - ./alluxio-files/alluxio-site.properties:/opt/alluxio/conf/alluxio-site.properties:ro
     expose:
       - "19998"
       - "19999"
@@ -48,7 +50,7 @@ services:
       ALLUXIO_JAVA_OPTS: "-Dalluxio.master.hostname=alluxio-master -Dalluxio.worker.ramdisk.size=1G -Dalluxio.master.mount.table.root.ufs=/opt/alluxio/underFSStorage -Dalluxio.worker.hostname=alluxio-worker"
     volumes:
       - alluxio-data:/opt/alluxio/underFSStorage
-      - ./alluxio-files/alluxio-site.properties:/opt/alluxio/conf/alluxio-site.properties 
+      - ./alluxio-files/alluxio-site.properties:/opt/alluxio/conf/alluxio-site.properties:ro
     expose:
       - "29999"
       - "30000"
@@ -60,6 +62,36 @@ services:
       - "30000:30000"
       - "39999:39999"
     command: ["worker"]
+
+  alluxio-mount-minio-bucket:
+    image: 'alluxio/alluxio-enterprise:latest'
+    container_name: alluxio-mount-minio-bucket
+    networks:
+      custom:
+        ipv4_address: 172.23.0.11
+    extra_hosts:
+      - "alluxio-master:172.23.0.2"
+      - "alluxio-worker:172.23.0.3"
+    depends_on:
+      - alluxio-master
+    environment:
+      ALLUXIO_JAVA_OPTS: "-Dalluxio.master.hostname=alluxio-master"
+    volumes:
+      - ./alluxio-files/alluxio-site.properties:/opt/alluxio/conf/alluxio-site.properties:ro
+    entrypoint: >
+      /bin/sh -c "
+        sleep 5
+        alluxio fs mount \
+           --option alluxio.underfs.s3.endpoint=http://minio:9000 \
+           --option alluxio.underfs.s3.disable.dns.buckets=true \
+           --option alluxio.underfs.s3.inherit.acl=false \
+           --option s3a.accessKeyId=minio \
+           --option s3a.secretKey=minio123 \
+           /hive s3a://hive/
+        alluxio fs chmod -R 777 /
+        alluxio fs chmod -R 777 /hive/
+        exit 0
+        "
 
   mariadb:
     image: 'mariadb:latest'
@@ -106,7 +138,6 @@ services:
         cp /tmp/alluxio-files/alluxio-core-site.xml /etc/trino/core-site.xml
         /usr/lib/trino/bin/run-trino
 
-
   hive-metastore:
     image: 'bitsondatadev/hive-metastore:latest'
     hostname: hive-metastore
@@ -118,15 +149,20 @@ services:
       - '9083:9083' # Metastore Thrift
     volumes:
       - ./conf/metastore-site.xml:/opt/apache-hive-metastore-3.0.0-bin/conf/metastore-site.xml:ro
+      - ./alluxio-files:/tmp/alluxio-files
     environment:
       METASTORE_DB_HOSTNAME: mariadb
     depends_on:
       - mariadb
-    command:
-      - /bin/sh
-      - -c 
-      - |
+      - minio
+      - alluxio-mount-minio-bucket
+    entrypoint: >
+      /bin/sh -c "
+        cp /tmp/alluxio-files/alluxio-enterprise-*-client.jar /opt/apache-hive-metastore-3.0.0-bin/lib/
+        echo '#### Hive /opt/apache-hive-metastore-3.0.0-bin/lib/ ###'
+        ls -al /opt/apache-hive-metastore-3.0.0-bin/lib/ | grep alluxio
         /entrypoint.sh
+        "
 
   minio:
     image: 'minio/minio:latest'
@@ -145,6 +181,26 @@ services:
       MINIO_SECRET_KEY: minio123
     command: server --console-address ":9001" /data
 
+  minio-create-buckets:
+    image: minio/mc:latest
+    container_name: minio-create-buckets
+    networks:
+      custom:
+        ipv4_address: 172.23.0.10
+    depends_on:
+      - minio
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    entrypoint: >
+      /bin/sh -c "
+        /usr/bin/mc config host add myminio http://minio:9000 minio minio123;
+        /usr/bin/mc mb myminio/hive;
+        /usr/bin/mc policy download myminio/hive;
+        /usr/bin/mc cp /etc/motd myminio/hive/warehouse/.temp_file;
+        exit 0;
+        "
+
   spark-master:
     image: docker.io/bitnami/spark:3.3
     hostname: spark-master
@@ -155,6 +211,7 @@ services:
     extra_hosts:
       - "alluxio-master:172.23.0.2"
       - "alluxio-worker:172.23.0.3"
+      - "hive-metastore:172.23.0.6"
       - "spark-master:  172.23.0.8"
       - "spark-worker:  172.23.0.9"
     volumes:
@@ -207,6 +264,8 @@ services:
         echo "spark.hadoop.hive.metastore.uris=thrift://hive-metastore:9083" >> /opt/bitnami/spark/conf/spark-defaults.conf
         cp /tmp/alluxio-files/alluxio-core-site.xml /opt/bitnami/spark/conf/core-site.xml
         /opt/bitnami/scripts/spark/run.sh
+    ports:
+      - '8082:8081'
     
 volumes:
   mariadb-data:
