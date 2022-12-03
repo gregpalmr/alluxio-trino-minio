@@ -74,6 +74,7 @@ services:
       - "alluxio-worker:172.23.0.3"
     depends_on:
       - alluxio-master
+      - minio-create-buckets
     environment:
       ALLUXIO_JAVA_OPTS: "-Dalluxio.master.hostname=alluxio-master"
     volumes:
@@ -88,11 +89,13 @@ services:
            --option s3a.accessKeyId=minio \
            --option s3a.secretKey=minio123 \
            /hive s3a://hive/
+        sleep 5
+        alluxio fs loadMetadata /hive
         alluxio fs chmod -R 777 /
         alluxio fs chmod -R 777 /hive/
+        alluxio fs chmod -R 777 /hive/warehouse
         exit 0
         "
-
   mariadb:
     image: 'mariadb:latest'
     hostname: mariadb
@@ -194,12 +197,17 @@ services:
       MINIO_SECRET_KEY: minio123
     entrypoint: >
       /bin/sh -c "
-        /usr/bin/mc config host add myminio http://minio:9000 minio minio123;
-        /usr/bin/mc mb myminio/hive;
-        /usr/bin/mc policy download myminio/hive;
-        /usr/bin/mc cp /etc/motd myminio/hive/warehouse/.temp_file;
-        exit 0;
-        "
+      /usr/bin/mc config host add myminio http://minio:9000 minio minio123;
+      if [ \"`/usr/bin/mc ls myminio`\" == \"\" ]; then 
+         echo \"Creating bucket myminio/hive\" && \
+         /usr/bin/mc mb myminio/hive && \
+         /usr/bin/mc policy download myminio/hive && \
+         /usr/bin/mc cp /etc/motd myminio/hive/warehouse/.temp_file; 
+      else 
+         echo \"Bucket myminio/hive already exists, skipping create\"; 
+      fi;
+      exit 0
+      "
 
   spark-master:
     image: docker.io/bitnami/spark:3.3
