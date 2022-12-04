@@ -338,25 +338,25 @@ Launch a bash session in the Spark master container and run some Spark Scala com
        // Read the Hive table using the hive metastore
        // Note: It will read via Alluxio's Transparent URI capability
 	  
-	  import org.apache.spark.sql.hive.HiveContext
+       import org.apache.spark.sql.hive.HiveContext
 
-	  val hiveContext = new org.apache.spark.sql.hive.HiveContext(sc)
+       val hiveContext = new org.apache.spark.sql.hive.HiveContext(sc)
 
-	  hiveContext.sql("USE default")
+       hiveContext.sql("USE default")
 
-	  hiveContext.sql("SHOW TABLES").show()
+       hiveContext.sql("SHOW TABLES").show()
 
-	  hiveContext.sql("SELECT * FROM default.customer_s3a WHERE acctbal > 3500.00 AND acctbal < 9000.00 ORDER BY acctbal LIMIT 25").show()
+       hiveContext.sql("SELECT * FROM default.customer_s3a WHERE acctbal > 3500.00 AND acctbal < 9000.00 ORDER BY acctbal LIMIT 25").show()
 
-	  // Read the S3 bucket directly without using the Hive metastore
-	  // Note: It will read via Alluxio's Transparent URI capability
+       // Read the S3 bucket directly without using the Hive metastore
+       // Note: It will read via Alluxio's Transparent URI capability
 
-	  val df=spark.read.orc("s3a://hive/warehouse/customer_s3a/").show(25)
+       val df=spark.read.orc("s3a://hive/warehouse/customer_s3a/").show(25)
 
        // Create a new table in the Hive warehouse
        val df = Seq((1, 2, 3),(2, 3, 4),(3, 4, 5)).toDF("a", "b", "c")
 
-	  df.write.saveAsTable("default.test_table")
+       df.write.saveAsTable("default.test_table")
 
        spark.catalog.listTables.show(false)
 
