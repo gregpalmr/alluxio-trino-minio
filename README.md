@@ -353,6 +353,21 @@ Launch a bash session in the Spark master container and run some Spark Scala com
 
 	  val df=spark.read.orc("s3a://hive/warehouse/customer_s3a/").show(25)
 
+       // Create a new table in the Hive warehouse
+       val df = Seq((1, 2, 3),(2, 3, 4),(3, 4, 5)).toDF("a", "b", "c")
+
+	  df.write.saveAsTable("default.test_table")
+
+       spark.catalog.listTables.show(false)
+
+       spark.sql("SELECT * FROM default.test_table LIMIT 10").show() 
+
+To view the data files created by the Spark df.write.saveAsTable() operation, go back to the Alluxio web console at:
+
+     http://localhost:19999
+
+And click on the "Browse" tab at the top, then click on the "hive" folder and then the "warehouse" folder. The "test_table" folder will show the parquet files created for the new table.
+
 ### Step 14. Destroy the containers
 
 When finished, destroy the docker containers and clean up the docker volumes using these commands:
