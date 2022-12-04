@@ -190,6 +190,12 @@ Display the Alluxio core-site.xml file contents:
             <value>CACHE</value>
           </property>
 
+          <!-- Enable client-side (northbound) impersonation in Alluxio -->
+          <property>
+            <name>alluxio.security.login.impersonation.username</name>
+            <value>_HDFS_USER_</value>
+          </property>
+
 </configuration>
 
 ### Step 9. View the Trino Web console
@@ -301,6 +307,12 @@ Next see how the Alluxio "shim" file system is configured to handle references t
             <name>alluxio.user.file.readtype.default</name>
             <value>CACHE</value>
 	     </property>
+
+          <!-- Enable client-side (northbound) impersonation in Alluxio -->
+          <property>
+            <name>alluxio.security.login.impersonation.username</name>
+            <value>_HDFS_USER_</value>
+          </property>
 
      </configuration>
 

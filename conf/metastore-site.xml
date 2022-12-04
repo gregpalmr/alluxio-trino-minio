@@ -99,4 +99,10 @@
        <value>CACHE</value>
      </property>
 
+     <!-- Enable client-side (northbound) impersonation in Alluxio -->
+     <property>
+       <name>alluxio.security.login.impersonation.username</name>
+       <value>_HDFS_USER_</value>
+     </property>
+
 </configuration>
