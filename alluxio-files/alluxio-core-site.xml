@@ -34,12 +34,22 @@
 	</property>
 
      <!-- Specify the Alluxio master node -->
+     <!-- If using Alluxio in HA mode, specify alluxio.master.rpc.addresses instead -->
     	<property>
   	  <name>alluxio.master.hostname</name>
   	  <value>alluxio-master</value>
 	</property>
 
+     <!-- Specify the Alluxio HA masters -->
+     <!--
+    	<property>
+  	  <name>alluxio.master.rpc.addresses</name>
+  	  <value>alluxio-master-1:19998,alluxio-master-2:19998,alluxio-master-3:19998</value>
+	</property>
+     -->
+
      <!-- Tell Alluxio to CACHE data when it is read for the first time -->
+
     	<property>
   	  <name>alluxio.user.file.readtype.default</name>
   	  <value>CACHE</value>
