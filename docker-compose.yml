@@ -11,10 +11,6 @@ services:
         ipv4_address: 172.23.0.2
     depends_on:
       - minio-create-buckets
-    extra_hosts:
-      - "alluxio-master:172.23.0.2"
-      - "alluxio-worker:172.23.0.3"
-      - "minio         :172.23.0.7"
     environment:
       # Run the command outside of this file to get the base64 formated license file
       # Like this: export ALLUXIO_LICENSE_BASE64=$(cat ./my-alluxio-license-file.json | base64)
@@ -39,10 +35,6 @@ services:
     networks:
       custom:
         ipv4_address: 172.23.0.3
-    extra_hosts:
-      - "alluxio-master:172.23.0.2"
-      - "alluxio-worker:172.23.0.3"
-      - "minio         :172.23.0.7"
     shm_size: '1gb'
     depends_on:
       - alluxio-master
@@ -69,9 +61,6 @@ services:
     networks:
       custom:
         ipv4_address: 172.23.0.11
-    extra_hosts:
-      - "alluxio-master:172.23.0.2"
-      - "alluxio-worker:172.23.0.3"
     depends_on:
       - alluxio-master
       - minio-create-buckets
@@ -120,11 +109,6 @@ services:
     networks:
       custom:
         ipv4_address: 172.23.0.5
-    extra_hosts:
-      - "alluxio-master:172.23.0.2"
-      - "alluxio-worker:172.23.0.3"
-      - "mariadb       :172.23.0.4"
-      - "minio         :172.23.0.7"
     ports:
       - '8080:8080'
     volumes:
@@ -218,12 +202,6 @@ services:
     networks:
       custom:
         ipv4_address: 172.23.0.8
-    extra_hosts:
-      - "alluxio-master:172.23.0.2"
-      - "alluxio-worker:172.23.0.3"
-      - "hive-metastore:172.23.0.6"
-      - "spark-master:  172.23.0.8"
-      - "spark-worker:  172.23.0.9"
     volumes:
       - ./alluxio-files:/tmp/alluxio-files
     environment:
@@ -250,11 +228,6 @@ services:
     networks:
       custom:
         ipv4_address: 172.23.0.9
-    extra_hosts:
-      - "alluxio-master:172.23.0.2"
-      - "alluxio-worker:172.23.0.3"
-      - "spark-master:  172.23.0.8"
-      - "spark-worker:  172.23.0.9"
     volumes:
       - ./alluxio-files:/tmp/alluxio-files
     environment:
