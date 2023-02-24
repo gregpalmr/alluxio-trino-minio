@@ -114,7 +114,7 @@ services:
       - mariadb-data:/var/lib/mysql
 
   trino-coordinator:
-    image: 'trinodb/trino:385'
+    image: 'trinodb/trino:399'
     hostname: trino-coordinator
     container_name: trino-coordinator
     networks:
@@ -139,6 +139,7 @@ services:
         cp /tmp/alluxio-files/alluxio-enterprise-*-client.jar /usr/lib/trino/plugin/hive/
         cp -R /tmp/etc-trino/* /etc/trino/
         cp /tmp/alluxio-files/alluxio-core-site.xml /etc/trino/core-site.xml
+        mkdir -p /home/trino && chown trino:trino /home/trino
         /usr/lib/trino/bin/run-trino
 
   hive-metastore:
