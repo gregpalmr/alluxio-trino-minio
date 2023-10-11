@@ -4,6 +4,7 @@ services:
 
   alluxio-master:
     image: 'alluxio/alluxio-enterprise:latest'
+    user: root
     hostname: alluxio-master
     container_name: alluxio-master
     networks:
@@ -30,6 +31,7 @@ services:
 
   alluxio-worker:
     image: 'alluxio/alluxio-enterprise:latest'
+    user: root
     hostname: alluxio-worker1
     container_name: alluxio-worker1
     networks:
@@ -57,6 +59,7 @@ services:
 
   alluxio-mount-minio-bucket:
     image: 'alluxio/alluxio-enterprise:latest'
+    user: root
     container_name: alluxio-mount-minio-bucket
     networks:
       custom:
