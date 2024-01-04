@@ -125,6 +125,9 @@ services:
       - |
         find /usr/lib/trino -name alluxio*shaded* -exec rm {} \;
         cp /tmp/alluxio-files/alluxio-enterprise-*-client.jar /usr/lib/trino/plugin/hive/
+        cp /tmp/alluxio-files/alluxio-enterprise-*-client.jar /usr/lib/trino/plugin/hudi/
+        cp /tmp/alluxio-files/alluxio-enterprise-*-client.jar /usr/lib/trino/plugin/iceberg/
+        cp /tmp/alluxio-files/alluxio-enterprise-*-client.jar /usr/lib/trino/plugin/delta-lake/
         cp -R /tmp/etc-trino/* /etc/trino/
         cp /tmp/alluxio-files/alluxio-core-site.xml /etc/trino/core-site.xml
         mkdir -p /home/trino && chown trino:trino /home/trino
