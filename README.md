@@ -128,13 +128,39 @@ Display the Minio catalog's minio.properties file and notice that the Minio endp
 
      cat /etc/trino/catalog/minio/minio.properties
 
-     connector.name=hive-hadoop2
+     connector.name=hive
      hive.s3-file-system-type=HADOOP_DEFAULT
      hive.metastore.uri=thrift://hive-metastore:9083
      hive.non-managed-table-writes-enabled=true
-     hive.s3select-pushdown.enabled=true
      hive.storage-format=ORC
      hive.allow-drop-table=true
+     hive.config.resources=/etc/trino/core-site.xml
+
+There is also a catalog for using the Trino Apache Iceberg plugin. Display the Iceberg catalog's iceberg.properties file and notice that connector.name is "iceberg", but it is still referencing the same Hive metastore on port 9083. When Trino queries use this catalog, they will be invoking the Trino Iceberg table format extensions.
+
+     cat /etc/trino/catalog/minio/iceberg.properties
+
+     # File: iceberg.properties
+     connector.name=iceberg
+     iceberg.catalog.type=hive_metastore
+     iceberg.file-format=PARQUET
+     hive.metastore.uri=thrift://hive-metastore:9083
+     hive.s3-file-system-type=HADOOP_DEFAULT
+     hive.config.resources=/etc/trino/core-site.xml
+
+There is also a catalog for using the Trino Delta Lake plugin. Display the Delta Lake catalog's delta-lake.properties file and notice that connector.name is "delta_lake", but it is still referencing the same Hive metastore on port 9083. When Trino queries use this catalog, they will be invoking the Trino Delta Lake table format extensions.
+
+     cat /etc/trino/catalog/minio/deltalake.properties
+
+     # File: deltalake.properties
+     connector.name=delta_lake
+     delta.hive-catalog-name=deltalake
+     delta.enable-non-concurrent-writes=true
+     delta.vacuum.min-retention=1h
+     delta.register-table-procedure.enabled=true
+     delta.extended-statistics.collect-on-write=false
+     hive.metastore.uri=thrift://hive-metastore:9083
+     hive.s3-file-system-type=HADOOP_DEFAULT
      hive.config.resources=/etc/trino/core-site.xml
 
 Next see how the Alluxio "shim" file system is configured to handle references to s3a URIs. See the properties named "fs.s3a.impl" and "fs.AbstractFileSystem.s3a.impl". Also, the "alluxio.master.hostname" property is defined to point to the Alluxio master node. If you are using Alluxio in high availability (HA) mode, with 3, 5 or 7 master nodes, then you would use the "alluxio.master.rpc.addresses" property instead.
