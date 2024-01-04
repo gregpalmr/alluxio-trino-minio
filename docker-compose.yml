@@ -115,6 +115,7 @@ services:
     ports:
       - '8080:8080'
     volumes:
+      - trino-data:/data
       - ./etc:/tmp/etc-trino
       - ./alluxio-files:/tmp/alluxio-files
       - ./conf:/tmp/conf
@@ -259,6 +260,8 @@ volumes:
   minio-data:
     driver: local
   alluxio-data:
+    driver: local
+  trino-data:
     driver: local
 
 networks:
