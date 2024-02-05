@@ -44,7 +44,7 @@
      <!--
     	<property>
   	  <name>alluxio.master.rpc.addresses</name>
-  	  <value>alluxio-master-1:19200,alluxio-master-2:19200,alluxio-master-3:19200</value>
+  	  <value>alluxio-master-1:19998,alluxio-master-2:19998,alluxio-master-3:19998</value>
 	</property>
      -->
 
